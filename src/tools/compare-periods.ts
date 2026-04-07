@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PlausibleApiError, type PlausibleClient, type PlausibleResponse } from "../plausible.js";
 import {
   siteIdSchema,
+  dateRangeSchema,
   pageSchema,
   goalSchema,
   metricsSchema,
@@ -69,16 +70,12 @@ export function register(
       annotations: { readOnlyHint: true },
       inputSchema: {
         site_id: siteIdSchema,
-        period_a: z
-          .string()
-          .describe(
-            'First date range, e.g. "2024-01-01,2024-01-07" or "7d"'
-          ),
-        period_b: z
-          .string()
-          .describe(
-            'Second date range, e.g. "2024-01-08,2024-01-14" or "7d"'
-          ),
+        period_a: dateRangeSchema.describe(
+          'First date range, e.g. "2024-01-01,2024-01-07" or "7d"'
+        ),
+        period_b: dateRangeSchema.describe(
+          'Second date range, e.g. "2024-01-08,2024-01-14" or "7d"'
+        ),
         page: pageSchema,
         metrics: metricsSchema,
         goal: goalSchema,
