@@ -11,7 +11,6 @@ import {
   buildPageFilter,
   buildGoalFilter,
 } from "../schemas.js";
-import { z } from "zod";
 import { resolveSiteId } from "./get-timeseries.js";
 
 interface PeriodComparison {
