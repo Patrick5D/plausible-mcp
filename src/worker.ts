@@ -92,11 +92,22 @@ export default Sentry.withSentry(
       }
 
       // Create a fresh server per request with the user's own API key
-      const server = createServer({
-        apiKey,
-        baseUrl: env.PLAUSIBLE_BASE_URL,
-        defaultSiteId: env.PLAUSIBLE_DEFAULT_SITE_ID,
-      });
+      let server;
+      try {
+        server = createServer({
+          apiKey,
+          baseUrl: env.PLAUSIBLE_BASE_URL,
+          defaultSiteId: env.PLAUSIBLE_DEFAULT_SITE_ID,
+        });
+      } catch (error) {
+        Sentry.captureException(error);
+        return corsResponse(
+          new Response(
+            JSON.stringify({ error: "Server configuration error." }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          ),
+        );
+      }
 
       const response = await createMcpHandler(server)(request, env, ctx);
       return corsResponse(response);
