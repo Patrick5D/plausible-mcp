@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat_v2"]
 # Set these via `wrangler secret put PLAUSIBLE_API_KEY`
 # or in the Cloudflare dashboard under Settings > Variables
 
+routes = [
+  { pattern = "plausible-mcp.sentry.dev", custom_domain = true }
+]
+
 [[unsafe.bindings]]
 name = "RATE_LIMITER"
 type = "ratelimit"

@@ -22,12 +22,12 @@ All tools are **read-only** and annotated with `readOnlyHint: true`.
 
 ### Remote (Hosted)
 
-A hosted instance is available at **`https://plausible-mcp.serg.tech`**. Each user provides their own Plausible API key as a Bearer token — no setup required.
+A hosted instance is available at **`https://plausible-mcp.sentry.dev`**. Each user provides their own Plausible API key as a Bearer token — no setup required.
 
 Add to Claude Code:
 
 ```bash
-claude mcp add plausible --transport http https://plausible-mcp.serg.tech
+claude mcp add plausible --transport http https://plausible-mcp.sentry.dev
 ```
 
 When prompted for authentication, use your Plausible API key as the Bearer token.
