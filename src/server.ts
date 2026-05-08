@@ -16,7 +16,7 @@ export function createServer(config: ServerConfig): McpServer {
   const server = Sentry.wrapMcpServerWithSentry(
     new McpServer({
       name: "plausible-mcp",
-      version: "0.1.0",
+      version: "0.2.0",
     }),
   );
 
