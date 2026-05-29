@@ -27,7 +27,7 @@ A hosted instance is available at **`https://plausible-mcp.sentry.dev`**. Each u
 Add to Claude Code:
 
 ```bash
-claude mcp add plausible --transport http --header "Authorization: Bearer YOUR_PLAUSIBLE_API_KEY" https://plausible-mcp.sentry.dev/mcp
+claude mcp add --transport http plausible https://plausible-mcp.sentry.dev/mcp --header "Authorization: Bearer YOUR_PLAUSIBLE_API_KEY"
 ```
 
 Or add manually to your MCP client config (Claude Desktop, Cursor, etc.):
