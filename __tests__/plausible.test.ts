@@ -19,6 +19,15 @@ function mockError(status: number, body: string) {
   });
 }
 
+function mockJsonResponse(status: number, data: unknown) {
+  mockFetch.mockResolvedValueOnce({
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
+  });
+}
+
 describe("PlausibleClient", () => {
   let client: PlausibleClient;
 
@@ -241,5 +250,131 @@ describe("PlausibleClient", () => {
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0].metrics).toEqual([100, 200]);
+  });
+
+  it("lists sites through the Sites API", async () => {
+    const data = {
+      sites: [{ domain: "example.com", timezone: "Etc/UTC" }],
+      meta: { limit: 100 },
+    };
+    mockOk(data);
+
+    const result = await client.listSites(50);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: "https://plausible.io/api/v1/sites?limit=50",
+      }),
+      { headers: { Authorization: "Bearer test-key" } }
+    );
+    expect(result.sites[0].domain).toBe("example.com");
+  });
+
+  it("lists goals through the Sites API", async () => {
+    const data = {
+      goals: [{ id: 1, display_name: "Signup", goal_type: "event" }],
+      meta: {},
+    };
+    mockOk(data);
+
+    const result = await client.listGoals("example.com", 20);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: "https://plausible.io/api/v1/sites/goals?site_id=example.com&limit=20",
+      }),
+      { headers: { Authorization: "Bearer test-key" } }
+    );
+    expect(result.goals[0].display_name).toBe("Signup");
+  });
+
+  it("gets realtime visitors", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve("7"),
+    });
+
+    const result = await client.getRealtimeVisitors("example.com");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        href: "https://plausible.io/api/v1/stats/realtime/visitors?site_id=example.com",
+      }),
+      { headers: { Authorization: "Bearer test-key" } }
+    );
+    expect(result).toBe(7);
+  });
+
+  it("falls back to v1 timeseries when v2 query is unavailable", async () => {
+    mockJsonResponse(404, { error: "not found" });
+    mockJsonResponse(200, {
+      results: [
+        { date: "2026-06-28", visitors: 11, pageviews: 13 },
+        { date: "2026-06-29", visitors: 9, pageviews: 22 },
+      ],
+    });
+
+    const result = await client.query({
+      site_id: "example.com",
+      metrics: ["visitors", "pageviews"],
+      date_range: "7d",
+      dimensions: ["time:day"],
+    });
+
+    const fallbackUrl = new URL(String(mockFetch.mock.calls[1][0]));
+    expect(fallbackUrl.pathname).toBe("/api/v1/stats/timeseries");
+    expect(fallbackUrl.searchParams.get("period")).toBe("7d");
+    expect(result.results[0]).toEqual({
+      dimensions: ["2026-06-28"],
+      metrics: [11, 13],
+    });
+  });
+
+  it("falls back to v1 breakdown and maps dimension rows", async () => {
+    mockJsonResponse(404, { error: "not found" });
+    mockJsonResponse(200, {
+      results: [{ page: "/", visitors: 79, pageviews: 97, bounce_rate: 69 }],
+    });
+
+    const result = await client.query({
+      site_id: "example.com",
+      metrics: ["visitors", "pageviews", "bounce_rate"],
+      date_range: "7d",
+      dimensions: ["event:page"],
+      pagination: { limit: 5 },
+    });
+
+    const fallbackUrl = new URL(String(mockFetch.mock.calls[1][0]));
+    expect(fallbackUrl.pathname).toBe("/api/v1/stats/breakdown");
+    expect(fallbackUrl.searchParams.get("property")).toBe("event:page");
+    expect(fallbackUrl.searchParams.get("limit")).toBe("5");
+    expect(result.results[0]).toEqual({
+      dimensions: ["/"],
+      metrics: [79, 97, 69],
+    });
+  });
+
+  it("falls back to v1 aggregate and serializes filters", async () => {
+    mockJsonResponse(404, { error: "not found" });
+    mockJsonResponse(200, {
+      results: {
+        visitors: { value: 29 },
+        pageviews: { value: 49 },
+      },
+    });
+
+    const result = await client.query({
+      site_id: "example.com",
+      metrics: ["visitors", "pageviews"],
+      date_range: "2026-06-23,2026-06-29",
+      filters: [["is", "event:page", ["/zh"]]],
+    });
+
+    const fallbackUrl = new URL(String(mockFetch.mock.calls[1][0]));
+    expect(fallbackUrl.pathname).toBe("/api/v1/stats/aggregate");
+    expect(fallbackUrl.searchParams.get("period")).toBe("custom");
+    expect(fallbackUrl.searchParams.get("date")).toBe("2026-06-23,2026-06-29");
+    expect(fallbackUrl.searchParams.get("filters")).toBe("event:page==/zh");
+    expect(result.results[0].metrics).toEqual([29, 49]);
   });
 });

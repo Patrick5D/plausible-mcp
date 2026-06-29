@@ -4,7 +4,12 @@ import type { PlausibleClient } from "../../src/plausible.js";
 
 export function createMockClient(
   returnValue?: unknown
-): PlausibleClient & { query: ReturnType<typeof vi.fn> } {
+): PlausibleClient & {
+  query: ReturnType<typeof vi.fn>;
+  listSites: ReturnType<typeof vi.fn>;
+  listGoals: ReturnType<typeof vi.fn>;
+  getRealtimeVisitors: ReturnType<typeof vi.fn>;
+} {
   return {
     query: vi.fn().mockResolvedValue(
       returnValue ?? {
@@ -15,7 +20,21 @@ export function createMockClient(
         query: {},
       }
     ),
-  } as unknown as PlausibleClient & { query: ReturnType<typeof vi.fn> };
+    listSites: vi.fn().mockResolvedValue({
+      sites: [{ domain: "example.com", timezone: "Etc/UTC" }],
+      meta: {},
+    }),
+    listGoals: vi.fn().mockResolvedValue({
+      goals: [{ id: 1, display_name: "Signup", goal_type: "event" }],
+      meta: {},
+    }),
+    getRealtimeVisitors: vi.fn().mockResolvedValue(3),
+  } as unknown as PlausibleClient & {
+    query: ReturnType<typeof vi.fn>;
+    listSites: ReturnType<typeof vi.fn>;
+    listGoals: ReturnType<typeof vi.fn>;
+    getRealtimeVisitors: ReturnType<typeof vi.fn>;
+  };
 }
 
 export function getToolHandler(server: McpServer, toolName: string) {

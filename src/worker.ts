@@ -1,16 +1,16 @@
-import * as Sentry from "@sentry/cloudflare";
-import { createMcpHandler } from "agents/mcp";
-import { createServer } from "./server.js";
+/**
+ * [INPUT]: 依赖 @modelcontextprotocol/sdk 的 WebStandardStreamableHTTPServerTransport，依赖 server.js 创建 Plausible MCP server
+ * [OUTPUT]: 对外提供 Cloudflare Worker fetch handler，通过 Authorization Bearer 接收 Plausible API key
+ * [POS]: src 的远程入口，和 index.ts 的 stdio 入口并列，负责 HTTP/CORS 与每请求 server 初始化
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
 
-interface RateLimiter {
-  limit(options: { key: string }): Promise<{ success: boolean }>;
-}
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { createServer } from "./server.js";
 
 interface Env {
   PLAUSIBLE_BASE_URL?: string;
   PLAUSIBLE_DEFAULT_SITE_ID?: string;
-  SENTRY_RELEASE?: string;
-  RATE_LIMITER?: RateLimiter;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -31,86 +31,59 @@ function corsResponse(response: Response): Response {
   return patched;
 }
 
-export default Sentry.withSentry(
-  (env: Env) => ({
-    dsn: "https://de333c4dff86900878d446e663271b2a@o4509446862274560.ingest.us.sentry.io/4511179029020672",
-    release: env.SENTRY_RELEASE,
-    tracesSampleRate: 1.0,
-    sendDefaultPii: true,
-  }),
-  {
-    async fetch(
-      request: Request,
-      env: Env,
-      ctx: ExecutionContext,
-    ): Promise<Response> {
-      // Handle CORS preflight
-      if (request.method === "OPTIONS") {
-        return new Response(null, { status: 204, headers: CORS_HEADERS });
-      }
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
 
-      // Rate limit by IP
-      const clientIp = request.headers.get("CF-Connecting-IP") ?? "unknown";
-      if (env.RATE_LIMITER) {
-        const { success } = await env.RATE_LIMITER.limit({ key: clientIp });
-        if (!success) {
-          return corsResponse(
-            new Response(
-              JSON.stringify({ error: "Rate limit exceeded. Try again later." }),
-              { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } },
-            ),
-          );
-        }
-      }
+    const authHeader = request.headers.get("Authorization");
+    const apiKey = authHeader?.replace(/^Bearer\s+/i, "").trim();
 
-      // Extract the user's Plausible API key from the Authorization header.
-      // Each user provides their own key — no shared secret.
-      const authHeader = request.headers.get("Authorization");
-      const apiKey = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    if (!apiKey) {
+      return corsResponse(
+        new Response(
+          JSON.stringify({
+            error:
+              "Missing Plausible API key. Pass it as a Bearer token in the Authorization header.",
+          }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    }
 
-      if (!apiKey) {
-        return corsResponse(
-          new Response(
-            JSON.stringify({
-              error:
-                "Missing Plausible API key. Pass it as a Bearer token in the Authorization header.",
-            }),
-            { status: 401, headers: { "Content-Type": "application/json" } },
-          ),
-        );
-      }
+    if (apiKey.length < 8) {
+      return corsResponse(
+        new Response(
+          JSON.stringify({
+            error: "Invalid API key. Key is too short.",
+          }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    }
 
-      if (apiKey.length < 8) {
-        return corsResponse(
-          new Response(
-            JSON.stringify({
-              error: "Invalid API key. Key is too short.",
-            }),
-            { status: 401, headers: { "Content-Type": "application/json" } },
-          ),
-        );
-      }
-
-      // Create a fresh server per request with the user's own API key
-      let server;
-      try {
-        server = createServer({
-          apiKey,
-          baseUrl: env.PLAUSIBLE_BASE_URL,
-          defaultSiteId: env.PLAUSIBLE_DEFAULT_SITE_ID,
-        });
-      } catch (error) {
-        Sentry.captureException(error);
-        return corsResponse(
-          new Response(
-            JSON.stringify({ error: "Server configuration error." }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          ),
-        );
-      }
-
-      const response = await createMcpHandler(server)(request, env, ctx);
+    try {
+      const server = createServer({
+        apiKey,
+        baseUrl: env.PLAUSIBLE_BASE_URL,
+        defaultSiteId: env.PLAUSIBLE_DEFAULT_SITE_ID,
+      });
+      const transport = new WebStandardStreamableHTTPServerTransport();
+      await server.connect(transport);
+      const response = await transport.handleRequest(request);
       return corsResponse(response);
-    },
-  } satisfies ExportedHandler<Env>,
-);
+    } catch {
+      return corsResponse(
+        new Response(JSON.stringify({ error: "Server configuration error." }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+  },
+} satisfies ExportedHandler<Env>;

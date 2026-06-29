@@ -1,4 +1,10 @@
-import * as Sentry from "@sentry/cloudflare";
+/**
+ * [INPUT]: 依赖 PlausibleClient 查询能力、共享 schema、页面与目标 filter builder
+ * [OUTPUT]: 对外提供 compare_periods 工具注册函数，以及测试用指标提取和 delta 计算函数
+ * [POS]: tools 的周期对比查询器，被 server.ts 注册，负责 before/after 聚合差异分析
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PlausibleApiError, type PlausibleClient, type PlausibleResponse } from "../plausible.js";
 import { UserFacingError } from "../errors.js";
@@ -116,7 +122,6 @@ export function register(
           ],
         };
       } catch (error) {
-        Sentry.captureException(error);
         const message = error instanceof PlausibleApiError
           ? `Plausible API returned ${error.status}`
           : error instanceof UserFacingError

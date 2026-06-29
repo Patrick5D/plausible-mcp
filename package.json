@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "eval": "bun run evals/run.ts",
-    "deploy": "SENTRY_RELEASE=$(node -p \"require('./package.json').version\") && npx wrangler deploy --outdir .sentry-build --var SENTRY_RELEASE:$SENTRY_RELEASE && npx sentry-cli releases new $SENTRY_RELEASE --org sentry-developer-experience --project plausible-mcp && npx sentry-cli sourcemaps upload --org sentry-developer-experience --project plausible-mcp --release $SENTRY_RELEASE .sentry-build && rm -rf .sentry-build"
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "mcp",
@@ -27,13 +27,10 @@
   "dependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
     "@modelcontextprotocol/sdk": "^1.7.0",
-    "@sentry/cloudflare": "^10.45.0",
-    "agents": "^0.8.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@sentry/cli": "^2",
     "@types/bun": "latest",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"

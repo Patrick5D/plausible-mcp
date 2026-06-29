@@ -1,11 +1,10 @@
 /**
- * [INPUT]: 依赖 zod schema、PlausibleClient 查询能力、页面与目标 filter builder
- * [OUTPUT]: 对外提供 get_conversions 工具注册函数
- * [POS]: tools 的转化查询器，被 server.ts 注册，负责目标事件与页面转化率分析
+ * [INPUT]: 依赖 PlausibleClient 聚合查询能力、共享 schema 和页面/目标 filter builder
+ * [OUTPUT]: 对外提供 get_aggregate 工具注册函数，返回某站点某时间段的总览指标
+ * [POS]: tools 的总览查询器，是 get_timeseries 的无维度兄弟工具，适合回答总体表现
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PlausibleApiError, type PlausibleClient } from "../plausible.js";
 import { UserFacingError } from "../errors.js";
@@ -14,10 +13,20 @@ import {
   dateRangeSchema,
   pageSchema,
   goalSchema,
+  metricsSchema,
   buildPageFilter,
   buildGoalFilter,
 } from "../schemas.js";
 import { resolveSiteId } from "./get-timeseries.js";
+
+const DEFAULT_AGGREGATE_METRICS = [
+  "visitors",
+  "visits",
+  "pageviews",
+  "views_per_visit",
+  "bounce_rate",
+  "visit_duration",
+];
 
 export function register(
   server: McpServer,
@@ -25,42 +34,32 @@ export function register(
   defaultSiteId?: string
 ) {
   server.registerTool(
-    "get_conversions",
+    "get_aggregate",
     {
-      title: "Get Conversions",
+      title: "Get Aggregate",
       description:
-        "Get goal conversion rates and counts. Can break down by page to see which pages drive conversions.",
+        "Get aggregate traffic and conversion metrics for a site over a date range. Use for overall visitors, pageviews, bounce rate, and duration.",
       annotations: { readOnlyHint: true },
       inputSchema: {
         site_id: siteIdSchema,
         date_range: dateRangeSchema,
-        goal: goalSchema,
         page: pageSchema,
-        breakdown_by_page: z
-          .boolean()
-          .default(false)
-          .describe("If true, shows conversion rate per page")
-          .optional(),
+        metrics: metricsSchema,
+        goal: goalSchema,
       },
     },
     async (args) => {
       try {
         const siteId = resolveSiteId(args.site_id, defaultSiteId);
-        const metrics = ["visitors", "events", "conversion_rate"];
-
+        const metrics = args.metrics ?? DEFAULT_AGGREGATE_METRICS;
         const filters: unknown[][] = [];
-        if (args.goal) filters.push(buildGoalFilter(args.goal));
         if (args.page) filters.push(buildPageFilter(args.page));
-
-        const dimensions = args.breakdown_by_page
-          ? ["event:goal", "event:page"]
-          : ["event:goal"];
+        if (args.goal) filters.push(buildGoalFilter(args.goal));
 
         const result = await client.query({
           site_id: siteId,
           metrics,
           date_range: args.date_range,
-          dimensions,
           filters,
         });
 
@@ -68,11 +67,12 @@ export function register(
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
-        const message = error instanceof PlausibleApiError
-          ? `Plausible API returned ${error.status}`
-          : error instanceof UserFacingError
-            ? error.message
-            : "An unexpected error occurred";
+        const message =
+          error instanceof PlausibleApiError
+            ? `Plausible API returned ${error.status}`
+            : error instanceof UserFacingError
+              ? error.message
+              : "An unexpected error occurred";
         return {
           content: [{ type: "text" as const, text: `Error: ${message}` }],
           isError: true,

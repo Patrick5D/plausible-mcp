@@ -1,4 +1,10 @@
-import * as Sentry from "@sentry/cloudflare";
+/**
+ * [INPUT]: 依赖 zod schema、PlausibleClient 查询能力、VALID_DIMENSIONS 和页面 filter builder
+ * [OUTPUT]: 对外提供 get_breakdown 工具注册函数
+ * [POS]: tools 的维度拆分查询器，被 server.ts 注册，负责 top pages/sources/countries 等分组分析
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PlausibleApiError, type PlausibleClient } from "../plausible.js";
@@ -65,7 +71,6 @@ export function register(
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
-        Sentry.captureException(error);
         const message = error instanceof PlausibleApiError
           ? `Plausible API returned ${error.status}`
           : error instanceof UserFacingError

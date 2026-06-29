@@ -7,6 +7,48 @@ export interface EvalCase {
 
 export const cases: EvalCase[] = [
   {
+    name: "site discovery",
+    prompt: "Which Plausible sites can this API key access?",
+    expectedTool: "list_sites",
+    assertions: () => [],
+  },
+  {
+    name: "aggregate traffic summary",
+    prompt: "Give me the total visitors, visits, pageviews, bounce rate, and duration for example.com in the last 30 days.",
+    expectedTool: "get_aggregate",
+    assertions: (args) => {
+      const errors: string[] = [];
+      if (args.date_range !== "30d" && !String(args.date_range).includes(",")) {
+        errors.push(`Expected date_range "30d" or date pair, got "${args.date_range}"`);
+      }
+      return errors;
+    },
+  },
+  {
+    name: "realtime visitors",
+    prompt: "How many people are on example.com right now?",
+    expectedTool: "get_realtime_visitors",
+    assertions: (args) => {
+      const errors: string[] = [];
+      if (!String(args.site_id ?? "").includes("example.com")) {
+        errors.push(`Expected site_id to include "example.com", got "${args.site_id}"`);
+      }
+      return errors;
+    },
+  },
+  {
+    name: "goal discovery",
+    prompt: "What goals are configured for example.com?",
+    expectedTool: "get_goals",
+    assertions: (args) => {
+      const errors: string[] = [];
+      if (!String(args.site_id ?? "").includes("example.com")) {
+        errors.push(`Expected site_id to include "example.com", got "${args.site_id}"`);
+      }
+      return errors;
+    },
+  },
+  {
     name: "before/after deploy comparison",
     prompt:
       "Did traffic to /pricing drop after March 15, 2024? Compare the week before and after.",

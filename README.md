@@ -11,6 +11,10 @@ Built for teams that want to ask questions like:
 
 | Tool | Description |
 |------|-------------|
+| `list_sites` | List sites accessible to the current API key |
+| `get_aggregate` | Aggregate traffic and conversion metrics for a date range |
+| `get_realtime_visitors` | Current visitors active in the last 5 minutes |
+| `get_goals` | List goals configured for a site |
 | `get_timeseries` | Traffic and conversion metrics over time (daily/weekly/monthly) |
 | `get_breakdown` | Break down by page, source, country, device, browser, OS, UTM params |
 | `get_conversions` | Goal conversion rates, optionally per-page |
@@ -102,7 +106,7 @@ For the Cloudflare Worker, `PLAUSIBLE_API_KEY` is not needed as an env var — e
 
 ## Plausible API
 
-This server wraps the [Plausible Stats API v2](https://plausible.io/docs/stats-api) (`POST /api/v2/query`). It works with both [Plausible Cloud](https://plausible.io) and [self-hosted](https://plausible.io/docs/self-hosting) instances.
+This server wraps the [Plausible Stats API v2](https://plausible.io/docs/stats-api) (`POST /api/v2/query`) and falls back to v1 stats endpoints when v2 is unavailable. It also uses selected v1 Sites and Realtime endpoints for site discovery, goal discovery, and current visitor counts. It works with both [Plausible Cloud](https://plausible.io) and [self-hosted](https://plausible.io/docs/self-hosting) instances.
 
 ### Supported Metrics
 
@@ -117,7 +121,7 @@ This server wraps the [Plausible Stats API v2](https://plausible.io/docs/stats-a
 ```bash
 bun install
 bun run build      # TypeScript compilation
-bun run test       # Run 53 unit + integration tests
+bun run test       # Run unit + integration tests
 bun run test:watch # Watch mode
 ```
 
@@ -145,6 +149,10 @@ src/
 ├── plausible.ts          # PlausibleClient — standalone API client
 ├── schemas.ts            # Shared Zod schemas and filter helpers
 └── tools/
+    ├── list-sites.ts
+    ├── get-aggregate.ts
+    ├── get-realtime-visitors.ts
+    ├── get-goals.ts
     ├── get-timeseries.ts
     ├── get-breakdown.ts
     ├── get-conversions.ts

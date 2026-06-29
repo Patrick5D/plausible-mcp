@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖 zod 构造 Plausible MCP 输入 schema，编码 Stats API metric/dimension 白名单
+ * [OUTPUT]: 对外提供站点、日期、页面、目标、指标 schema 和 Plausible filter builder
+ * [POS]: src 的共享契约层，被所有 tools 复用，保证 MCP 输入收窄到 Plausible 可接受形态
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 import { z } from "zod";
 
 export const VALID_METRICS = [
