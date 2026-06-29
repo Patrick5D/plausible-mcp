@@ -11,6 +11,7 @@ import { createServer } from "./server.js";
 interface Env {
   PLAUSIBLE_BASE_URL?: string;
   PLAUSIBLE_DEFAULT_SITE_ID?: string;
+  PLAUSIBLE_SITE_IDS?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -72,6 +73,9 @@ export default {
         apiKey,
         baseUrl: env.PLAUSIBLE_BASE_URL,
         defaultSiteId: env.PLAUSIBLE_DEFAULT_SITE_ID,
+        siteIds: env.PLAUSIBLE_SITE_IDS?.split(",")
+          .map((site) => site.trim())
+          .filter(Boolean),
       });
       const transport = new WebStandardStreamableHTTPServerTransport();
       await server.connect(transport);

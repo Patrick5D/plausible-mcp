@@ -7,7 +7,11 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { PlausibleApiError, type PlausibleClient } from "../plausible.js";
+import {
+  PlausibleApiError,
+  type PlausibleClient,
+  type PlausibleGoalsResponse,
+} from "../plausible.js";
 import { UserFacingError } from "../errors.js";
 import { siteIdSchema } from "../schemas.js";
 import { resolveSiteId } from "./get-timeseries.js";
@@ -38,7 +42,35 @@ export function register(
     async (args) => {
       try {
         const siteId = resolveSiteId(args.site_id, defaultSiteId);
-        const result = await client.listGoals(siteId, args.limit ?? 100);
+        let result: PlausibleGoalsResponse;
+        try {
+          result = await client.listGoals(siteId, args.limit ?? 100);
+        } catch (error) {
+          if (!(error instanceof PlausibleApiError) || error.status !== 404) {
+            throw error;
+          }
+
+          const fallback = await client.query({
+            site_id: siteId,
+            metrics: ["visitors", "events", "conversion_rate"],
+            date_range: "all",
+            dimensions: ["event:goal"],
+            pagination: { limit: args.limit ?? 100 },
+          });
+          result = {
+            goals: fallback.results.map((row) => ({
+              id: String(row.dimensions[0] ?? ""),
+              display_name: String(row.dimensions[0] ?? ""),
+              goal_type: "stats_breakdown",
+              custom_props: {
+                visitors: row.metrics[0],
+                events: row.metrics[1],
+                conversion_rate: row.metrics[2],
+              },
+            })),
+            meta: { source: "stats_breakdown", api_error_status: 404 },
+          };
+        }
 
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],

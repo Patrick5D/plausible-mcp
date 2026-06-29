@@ -55,6 +55,7 @@ Tests use Vitest with mocked `fetch` — no Plausible account needed. Test helpe
 | `PLAUSIBLE_API_KEY` | Yes (STDIO only) | Plausible API key |
 | `PLAUSIBLE_BASE_URL` | No | Custom Plausible instance URL (default: `https://plausible.io`) |
 | `PLAUSIBLE_DEFAULT_SITE_ID` | No | Default site domain to avoid passing `site_id` every call |
+| `PLAUSIBLE_SITE_IDS` | No | Comma-separated site domains for `list_sites` fallback on self-hosted CE |
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

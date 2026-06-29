@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { register } from "../../src/tools/get-goals.js";
 import { createMockClient, getToolHandler } from "./_helpers.js";
+import { PlausibleApiError } from "../../src/plausible.js";
 
 describe("get_goals tool", () => {
   let server: McpServer;
@@ -27,5 +28,21 @@ describe("get_goals tool", () => {
     await handler({ limit: 5 });
 
     expect(client.listGoals).toHaveBeenCalledWith("default.com", 5);
+  });
+
+  it("falls back to event:goal breakdown when Sites API goals are unavailable", async () => {
+    client.listGoals = vi.fn().mockRejectedValue(new PlausibleApiError(404, "not found"));
+    const handler = getToolHandler(server, "get_goals");
+    const result = await handler({ site_id: "example.com", limit: 5 });
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(client.query).toHaveBeenCalledWith({
+      site_id: "example.com",
+      metrics: ["visitors", "events", "conversion_rate"],
+      date_range: "all",
+      dimensions: ["event:goal"],
+      pagination: { limit: 5 },
+    });
+    expect(parsed.meta.source).toBe("stats_breakdown");
   });
 });

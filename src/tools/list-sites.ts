@@ -7,9 +7,13 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { PlausibleApiError, type PlausibleClient } from "../plausible.js";
+import { PlausibleApiError, type PlausibleClient, type PlausibleSitesResponse } from "../plausible.js";
 
-export function register(server: McpServer, client: PlausibleClient) {
+export function register(
+  server: McpServer,
+  client: PlausibleClient,
+  configuredSiteIds: string[] = []
+) {
   server.registerTool(
     "list_sites",
     {
@@ -34,9 +38,19 @@ export function register(server: McpServer, client: PlausibleClient) {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
+        if (configuredSiteIds.length && error instanceof PlausibleApiError) {
+          const result: PlausibleSitesResponse = {
+            sites: configuredSiteIds.slice(0, args.limit ?? 100).map((domain) => ({ domain })),
+            meta: { source: "PLAUSIBLE_SITE_IDS", api_error_status: error.status },
+          };
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
         const message =
           error instanceof PlausibleApiError
-            ? `Plausible API returned ${error.status}. This endpoint may require a Sites API key.`
+            ? `Plausible API returned ${error.status}. This endpoint may require a Sites API key, or set PLAUSIBLE_SITE_IDS for self-hosted CE.`
             : "An unexpected error occurred";
         return {
           content: [{ type: "text" as const, text: `Error: ${message}` }],

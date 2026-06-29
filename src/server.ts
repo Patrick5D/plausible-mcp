@@ -20,6 +20,7 @@ export interface ServerConfig {
   apiKey: string;
   baseUrl?: string;
   defaultSiteId?: string;
+  siteIds?: string[];
 }
 
 export function createServer(config: ServerConfig): McpServer {
@@ -33,7 +34,7 @@ export function createServer(config: ServerConfig): McpServer {
     baseUrl: config.baseUrl,
   });
 
-  registerListSites(server, client);
+  registerListSites(server, client, config.siteIds);
   registerAggregate(server, client, config.defaultSiteId);
   registerRealtimeVisitors(server, client, config.defaultSiteId);
   registerGoals(server, client, config.defaultSiteId);

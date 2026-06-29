@@ -16,6 +16,10 @@ const server = createServer({
   apiKey,
   baseUrl: process.env.PLAUSIBLE_BASE_URL,
   defaultSiteId: process.env.PLAUSIBLE_DEFAULT_SITE_ID,
+  siteIds: process.env.PLAUSIBLE_SITE_IDS
+    ?.split(",")
+    .map((site) => site.trim())
+    .filter(Boolean),
 });
 
 const transport = new StdioServerTransport();

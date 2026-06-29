@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { register } from "../../src/tools/list-sites.js";
 import { createMockClient, getToolHandler } from "./_helpers.js";
+import { PlausibleApiError } from "../../src/plausible.js";
 
 describe("list_sites tool", () => {
   let server: McpServer;
@@ -28,5 +29,20 @@ describe("list_sites tool", () => {
     await handler({ limit: 10 });
 
     expect(client.listSites).toHaveBeenCalledWith(10);
+  });
+
+  it("falls back to configured site ids when Sites API is unavailable", async () => {
+    server = new McpServer({ name: "test", version: "0.0.1" });
+    client = createMockClient();
+    client.listSites = vi.fn().mockRejectedValue(new PlausibleApiError(404, "not found"));
+    register(server, client, ["example.com", "docs.example.com"]);
+
+    const handler = getToolHandler(server, "list_sites");
+    const result = await handler({ limit: 1 });
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(result.isError).toBeFalsy();
+    expect(parsed.sites).toEqual([{ domain: "example.com" }]);
+    expect(parsed.meta.source).toBe("PLAUSIBLE_SITE_IDS");
   });
 });

@@ -101,12 +101,13 @@ The worker is multi-tenant — each user passes their own Plausible API key via 
 | `PLAUSIBLE_API_KEY` | Yes (STDIO) | — | Your Plausible API key ([get one here](https://plausible.io/docs/stats-api)) |
 | `PLAUSIBLE_BASE_URL` | No | `https://plausible.io` | URL of your Plausible instance (for self-hosted) |
 | `PLAUSIBLE_DEFAULT_SITE_ID` | No | — | Default site domain so you don't have to pass `site_id` every call |
+| `PLAUSIBLE_SITE_IDS` | No | — | Comma-separated site domains used as a `list_sites` fallback when the Sites API is unavailable |
 
 For the Cloudflare Worker, `PLAUSIBLE_API_KEY` is not needed as an env var — each user passes their own key via the `Authorization: Bearer` header.
 
 ## Plausible API
 
-This server wraps the [Plausible Stats API v2](https://plausible.io/docs/stats-api) (`POST /api/v2/query`) and falls back to v1 stats endpoints when v2 is unavailable. It also uses selected v1 Sites and Realtime endpoints for site discovery, goal discovery, and current visitor counts. It works with both [Plausible Cloud](https://plausible.io) and [self-hosted](https://plausible.io/docs/self-hosting) instances.
+This server wraps the [Plausible Stats API v2](https://plausible.io/docs/stats-api) (`POST /api/v2/query`) and falls back to v1 stats endpoints when v2 is unavailable. It also uses selected v1 Sites and Realtime endpoints for site discovery, goal discovery, and current visitor counts. If the Sites API is unavailable on self-hosted Community Edition, `list_sites` can fall back to `PLAUSIBLE_SITE_IDS`, and `get_goals` falls back to a Stats API `event:goal` breakdown.
 
 ### Supported Metrics
 
