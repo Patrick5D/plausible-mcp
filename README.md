@@ -165,6 +165,18 @@ src/
     ├── get-aggregate.ts
     ├── get-realtime-visitors.ts
     ├── get-goals.ts
+    ├── breakdown-presets.ts
+    ├── get-pages.ts
+    ├── get-sources.ts
+    ├── get-countries.ts
+    ├── get-devices.ts
+    ├── get-entry-exit-pages.ts
+    ├── get-utm-campaigns.ts
+    ├── get-page-timeseries.ts
+    ├── find-traffic-anomalies.ts
+    ├── get-mcp-config.ts
+    ├── get-site-health.ts
+    ├── detect-plausible-capabilities.ts
     ├── get-timeseries.ts
     ├── get-breakdown.ts
     ├── get-conversions.ts

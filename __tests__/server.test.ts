@@ -43,7 +43,7 @@ describe("MCP Server Integration", () => {
     await client.close();
   });
 
-  it("lists all 16 tools", async () => {
+  it("lists all 19 tools", async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
