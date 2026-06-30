@@ -19,6 +19,10 @@ import { register as registerPages } from "./tools/get-pages.js";
 import { register as registerSources } from "./tools/get-sources.js";
 import { register as registerCountries } from "./tools/get-countries.js";
 import { register as registerDevices } from "./tools/get-devices.js";
+import { register as registerEntryExitPages } from "./tools/get-entry-exit-pages.js";
+import { register as registerUtmCampaigns } from "./tools/get-utm-campaigns.js";
+import { register as registerPageTimeseries } from "./tools/get-page-timeseries.js";
+import { register as registerTrafficAnomalies } from "./tools/find-traffic-anomalies.js";
 
 export interface ServerConfig {
   apiKey: string;
@@ -46,6 +50,10 @@ export function createServer(config: ServerConfig): McpServer {
   registerSources(server, client, config.defaultSiteId);
   registerCountries(server, client, config.defaultSiteId);
   registerDevices(server, client, config.defaultSiteId);
+  registerEntryExitPages(server, client, config.defaultSiteId);
+  registerUtmCampaigns(server, client, config.defaultSiteId);
+  registerPageTimeseries(server, client, config.defaultSiteId);
+  registerTrafficAnomalies(server, client, config.defaultSiteId);
   registerTimeseries(server, client, config.defaultSiteId);
   registerBreakdown(server, client, config.defaultSiteId);
   registerConversions(server, client, config.defaultSiteId);

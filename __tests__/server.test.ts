@@ -43,21 +43,25 @@ describe("MCP Server Integration", () => {
     await client.close();
   });
 
-  it("lists all 12 tools", async () => {
+  it("lists all 16 tools", async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "compare_periods",
+      "find_traffic_anomalies",
       "get_aggregate",
       "get_breakdown",
       "get_conversions",
       "get_countries",
       "get_devices",
+      "get_entry_exit_pages",
       "get_goals",
+      "get_page_timeseries",
       "get_pages",
       "get_realtime_visitors",
       "get_sources",
       "get_timeseries",
+      "get_utm_campaigns",
       "list_sites",
     ]);
   });

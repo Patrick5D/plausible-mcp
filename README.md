@@ -19,6 +19,10 @@ Built for teams that want to ask questions like:
 | `get_sources` | Top traffic sources without manually choosing `visit:source` |
 | `get_countries` | Top countries without manually choosing `visit:country` |
 | `get_devices` | Device, browser, and OS breakdowns in one call |
+| `get_entry_exit_pages` | Entry and exit page rankings in one call |
+| `get_utm_campaigns` | UTM medium/source/campaign/content/term breakdowns |
+| `get_page_timeseries` | Page-level trend query with required `page` |
+| `find_traffic_anomalies` | Biggest dimension-level changes between two periods |
 | `get_timeseries` | Traffic and conversion metrics over time (daily/weekly/monthly) |
 | `get_breakdown` | Break down by page, source, country, device, browser, OS, UTM params |
 | `get_conversions` | Goal conversion rates, optionally per-page |
