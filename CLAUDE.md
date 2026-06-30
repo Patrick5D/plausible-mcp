@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-MCP server for Plausible Analytics — wraps the Plausible Stats API v2 (`POST /api/v2/query`) with v1 fallback for self-hosted instances, plus selected v1 Sites/Realtime endpoints. Provides eight read-only tools (`list_sites`, `get_aggregate`, `get_realtime_visitors`, `get_goals`, `get_timeseries`, `get_breakdown`, `get_conversions`, `compare_periods`) for querying traffic, conversion, discovery, and realtime data from any MCP-compatible AI tool.
+MCP server for Plausible Analytics — wraps the Plausible Stats API v2 (`POST /api/v2/query`) with v1 fallback for self-hosted instances, plus selected v1 Sites/Realtime endpoints. Provides read-only tools for traffic, conversion, discovery, realtime, and semantic breakdown queries from any MCP-compatible AI tool.
 
 Two entry points:
 - **STDIO** (`src/index.ts`) — local use, reads `PLAUSIBLE_API_KEY` from env

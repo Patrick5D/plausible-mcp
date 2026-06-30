@@ -15,6 +15,10 @@ import { register as registerListSites } from "./tools/list-sites.js";
 import { register as registerAggregate } from "./tools/get-aggregate.js";
 import { register as registerRealtimeVisitors } from "./tools/get-realtime-visitors.js";
 import { register as registerGoals } from "./tools/get-goals.js";
+import { register as registerPages } from "./tools/get-pages.js";
+import { register as registerSources } from "./tools/get-sources.js";
+import { register as registerCountries } from "./tools/get-countries.js";
+import { register as registerDevices } from "./tools/get-devices.js";
 
 export interface ServerConfig {
   apiKey: string;
@@ -38,6 +42,10 @@ export function createServer(config: ServerConfig): McpServer {
   registerAggregate(server, client, config.defaultSiteId);
   registerRealtimeVisitors(server, client, config.defaultSiteId);
   registerGoals(server, client, config.defaultSiteId);
+  registerPages(server, client, config.defaultSiteId);
+  registerSources(server, client, config.defaultSiteId);
+  registerCountries(server, client, config.defaultSiteId);
+  registerDevices(server, client, config.defaultSiteId);
   registerTimeseries(server, client, config.defaultSiteId);
   registerBreakdown(server, client, config.defaultSiteId);
   registerConversions(server, client, config.defaultSiteId);

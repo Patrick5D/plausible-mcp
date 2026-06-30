@@ -15,6 +15,10 @@ Built for teams that want to ask questions like:
 | `get_aggregate` | Aggregate traffic and conversion metrics for a date range |
 | `get_realtime_visitors` | Current visitors active in the last 5 minutes |
 | `get_goals` | List goals configured for a site |
+| `get_pages` | Top pages without manually choosing `event:page` |
+| `get_sources` | Top traffic sources without manually choosing `visit:source` |
+| `get_countries` | Top countries without manually choosing `visit:country` |
+| `get_devices` | Device, browser, and OS breakdowns in one call |
 | `get_timeseries` | Traffic and conversion metrics over time (daily/weekly/monthly) |
 | `get_breakdown` | Break down by page, source, country, device, browser, OS, UTM params |
 | `get_conversions` | Goal conversion rates, optionally per-page |
