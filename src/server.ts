@@ -23,6 +23,9 @@ import { register as registerEntryExitPages } from "./tools/get-entry-exit-pages
 import { register as registerUtmCampaigns } from "./tools/get-utm-campaigns.js";
 import { register as registerPageTimeseries } from "./tools/get-page-timeseries.js";
 import { register as registerTrafficAnomalies } from "./tools/find-traffic-anomalies.js";
+import { register as registerMcpConfig } from "./tools/get-mcp-config.js";
+import { register as registerSiteHealth } from "./tools/get-site-health.js";
+import { register as registerCapabilities } from "./tools/detect-plausible-capabilities.js";
 
 export interface ServerConfig {
   apiKey: string;
@@ -42,6 +45,14 @@ export function createServer(config: ServerConfig): McpServer {
     baseUrl: config.baseUrl,
   });
 
+  registerMcpConfig(server, {
+    baseUrl: config.baseUrl ?? "https://plausible.io",
+    defaultSiteId: config.defaultSiteId,
+    configuredSiteCount: config.siteIds?.length ?? 0,
+    configuredSitesAvailable: Boolean(config.siteIds?.length),
+  });
+  registerSiteHealth(server, client, config.defaultSiteId);
+  registerCapabilities(server, client, config.defaultSiteId);
   registerListSites(server, client, config.siteIds);
   registerAggregate(server, client, config.defaultSiteId);
   registerRealtimeVisitors(server, client, config.defaultSiteId);

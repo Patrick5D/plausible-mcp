@@ -15,6 +15,9 @@ get-entry-exit-pages.ts: 入口/退出页工具，同时查询 visit:entry_page 
 get-utm-campaigns.ts: UTM 工具，同时查询 medium/source/campaign/content/term 五类投放维度。
 get-page-timeseries.ts: 页面趋势工具，强制 page 参数后查询 time:day/week/month。
 find-traffic-anomalies.ts: 异常发现工具，对两个时间段的同一维度做绝对值和百分比变化计算。
+get-mcp-config.ts: 配置诊断工具，只返回 baseUrl、默认站点和配置站点数量，不暴露 token。
+get-site-health.ts: 站点健康工具，用 stats/realtime 最小查询验证 site_id 和 API 可达性。
+detect-plausible-capabilities.ts: 能力探测工具，区分 stats/realtime/sites/goals API 是否可用。
 get-timeseries.ts: 时间序列工具，按 day/week/month 维度查询趋势，并暴露 resolveSiteId。
 get-breakdown.ts: 维度拆分工具，按 page/source/country/device/browser 等维度查询排行。
 get-conversions.ts: 转化查询工具，按 goal/page 查询转化率和转化次数。

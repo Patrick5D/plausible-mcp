@@ -23,6 +23,9 @@ Built for teams that want to ask questions like:
 | `get_utm_campaigns` | UTM medium/source/campaign/content/term breakdowns |
 | `get_page_timeseries` | Page-level trend query with required `page` |
 | `find_traffic_anomalies` | Biggest dimension-level changes between two periods |
+| `get_mcp_config` | Non-sensitive MCP runtime configuration |
+| `get_site_health` | Stats and realtime health checks for one site |
+| `detect_plausible_capabilities` | Detect Stats, Realtime, Sites, and Goals API availability |
 | `get_timeseries` | Traffic and conversion metrics over time (daily/weekly/monthly) |
 | `get_breakdown` | Break down by page, source, country, device, browser, OS, UTM params |
 | `get_conversions` | Goal conversion rates, optionally per-page |

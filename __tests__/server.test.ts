@@ -48,6 +48,7 @@ describe("MCP Server Integration", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "compare_periods",
+      "detect_plausible_capabilities",
       "find_traffic_anomalies",
       "get_aggregate",
       "get_breakdown",
@@ -56,9 +57,11 @@ describe("MCP Server Integration", () => {
       "get_devices",
       "get_entry_exit_pages",
       "get_goals",
+      "get_mcp_config",
       "get_page_timeseries",
       "get_pages",
       "get_realtime_visitors",
+      "get_site_health",
       "get_sources",
       "get_timeseries",
       "get_utm_campaigns",
