@@ -2,7 +2,7 @@
 > L2 | 父级: ../../CLAUDE.md
 
 成员清单
-list-sites.ts: 站点发现工具，优先调用 Plausible Sites API，不可用时返回 PLAUSIBLE_SITE_IDS 配置。
+list-sites.ts: 站点发现工具，优先调用 Plausible Sites API，404/501 不可用时返回 PLAUSIBLE_SITE_IDS 配置。
 get-aggregate.ts: 聚合指标工具，无维度查询 Stats API，返回站点或页面在时间段内的总览。
 get-realtime-visitors.ts: 实时访客工具，调用 realtime visitors endpoint，返回最近 5 分钟活跃人数。
 get-goals.ts: 目标发现工具，优先调用 Sites goals API，不可用时用 event:goal breakdown 推断。

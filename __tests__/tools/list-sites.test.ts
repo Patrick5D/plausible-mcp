@@ -45,4 +45,17 @@ describe("list_sites tool", () => {
     expect(parsed.sites).toEqual([{ domain: "example.com" }]);
     expect(parsed.meta.source).toBe("PLAUSIBLE_SITE_IDS");
   });
+
+  it("does not fallback on authentication errors", async () => {
+    server = new McpServer({ name: "test", version: "0.0.1" });
+    client = createMockClient();
+    client.listSites = vi.fn().mockRejectedValue(new PlausibleApiError(401, "bad key"));
+    register(server, client, ["example.com"]);
+
+    const handler = getToolHandler(server, "list_sites");
+    const result = await handler({});
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("401");
+  });
 });

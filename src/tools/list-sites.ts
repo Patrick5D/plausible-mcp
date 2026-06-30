@@ -38,7 +38,11 @@ export function register(
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
-        if (configuredSiteIds.length && error instanceof PlausibleApiError) {
+        if (
+          configuredSiteIds.length &&
+          error instanceof PlausibleApiError &&
+          (error.status === 404 || error.status === 501)
+        ) {
           const result: PlausibleSitesResponse = {
             sites: configuredSiteIds.slice(0, args.limit ?? 100).map((domain) => ({ domain })),
             meta: { source: "PLAUSIBLE_SITE_IDS", api_error_status: error.status },

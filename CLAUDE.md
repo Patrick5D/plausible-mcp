@@ -32,7 +32,7 @@ PLAUSIBLE_API_KEY=your-key npx @modelcontextprotocol/inspector bun run src/index
 
 `PlausibleClient` (`src/plausible.ts`) is a standalone API client with zero MCP dependency. Each tool in `src/tools/` exports a `register(server, client, defaultSiteId?)` function that registers itself on the `McpServer`. Discovery tools (`list_sites`, `get_goals`) may require a Plausible Sites API key; analytics tools use the Stats API key path. `src/server.ts` wires them together via `createServer()`.
 
-The worker (`src/worker.ts`) creates a fresh server and WebStandard streamable HTTP transport per request using the caller's Bearer token. Remote deployments stay stateless: no Plausible API key is stored in Cloudflare, while `PLAUSIBLE_BASE_URL` and `PLAUSIBLE_DEFAULT_SITE_ID` can be set as deployment-specific environment variables.
+The worker (`src/worker.ts`) rate-limits requests before authentication, then creates a fresh server and WebStandard streamable HTTP transport per request using the caller's Bearer token. Remote deployments stay stateless: no Plausible API key is stored in Cloudflare, while `PLAUSIBLE_BASE_URL`, `PLAUSIBLE_DEFAULT_SITE_ID`, `PLAUSIBLE_SITE_IDS`, and `MCP_RATE_LIMIT_PER_MINUTE` can be set as deployment-specific environment variables.
 
 Shared Zod schemas and filter builders live in `src/schemas.ts`. Plausible filters use array format: `["is", "event:page", ["/pricing"]]` or `["contains", "event:page", ["/blog"]]` for wildcard.
 
@@ -56,6 +56,7 @@ Tests use Vitest with mocked `fetch` — no Plausible account needed. Test helpe
 | `PLAUSIBLE_BASE_URL` | No | Custom Plausible instance URL (default: `https://plausible.io`) |
 | `PLAUSIBLE_DEFAULT_SITE_ID` | No | Default site domain to avoid passing `site_id` every call |
 | `PLAUSIBLE_SITE_IDS` | No | Comma-separated site domains for `list_sites` fallback on self-hosted CE |
+| `MCP_RATE_LIMIT_PER_MINUTE` | No | Per-IP Worker request limit when no Cloudflare `RATE_LIMITER` binding is present |
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 

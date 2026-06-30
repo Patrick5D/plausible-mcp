@@ -9,3 +9,4 @@ workers_dev = true
 # PLAUSIBLE_BASE_URL = "https://plausible.example.com"
 # PLAUSIBLE_DEFAULT_SITE_ID = "example.com"
 # PLAUSIBLE_SITE_IDS = "example.com,docs.example.com"
+# MCP_RATE_LIMIT_PER_MINUTE = "60"

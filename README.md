@@ -35,14 +35,14 @@ All tools are **read-only** and annotated with `readOnlyHint: true`.
 
 ## Quick Start
 
-### Remote (Hosted)
+### Remote (Cloudflare Worker)
 
-A hosted instance is available at **`https://plausible-mcp.sentry.dev`**. Each user provides their own Plausible API key as a Bearer token — no setup required.
+Deploy your own remote Worker and point your MCP client at its `/mcp` endpoint. Each user provides their own Plausible API key as a Bearer token.
 
 Add to Claude Code:
 
 ```bash
-claude mcp add --transport http plausible https://plausible-mcp.sentry.dev/mcp --header "Authorization: Bearer YOUR_PLAUSIBLE_API_KEY"
+claude mcp add --transport http plausible https://YOUR_WORKER_DOMAIN/mcp --header "Authorization: Bearer YOUR_PLAUSIBLE_API_KEY"
 ```
 
 Or add manually to your MCP client config (Claude Desktop, Cursor, etc.):
@@ -51,7 +51,7 @@ Or add manually to your MCP client config (Claude Desktop, Cursor, etc.):
 {
   "mcpServers": {
     "plausible": {
-      "url": "https://plausible-mcp.sentry.dev/mcp",
+      "url": "https://YOUR_WORKER_DOMAIN/mcp",
       "headers": {
         "Authorization": "Bearer YOUR_PLAUSIBLE_API_KEY"
       }
@@ -65,7 +65,7 @@ Or add manually to your MCP client config (Claude Desktop, Cursor, etc.):
 If you prefer to run it locally:
 
 ```bash
-git clone https://github.com/getsentry/plausible-mcp.git
+git clone https://github.com/Patrick5D/plausible-mcp.git
 cd plausible-mcp
 bun install
 ```
@@ -97,13 +97,13 @@ Or Claude Desktop (`claude_desktop_config.json`):
 Deploy your own instance:
 
 ```bash
-git clone https://github.com/getsentry/plausible-mcp.git
+git clone https://github.com/Patrick5D/plausible-mcp.git
 cd plausible-mcp
 bun install
-npx wrangler deploy
+bun run deploy
 ```
 
-The worker is multi-tenant — each user passes their own Plausible API key via the `Authorization: Bearer` header. No shared secrets needed on the server.
+The worker is multi-tenant: each user passes their own Plausible API key via the `Authorization: Bearer` header. It applies per-IP rate limiting before authentication. Set `MCP_RATE_LIMIT_PER_MINUTE` to tune the built-in limiter, or bind a Cloudflare `RATE_LIMITER` if your account uses Cloudflare's Rate Limiting binding.
 
 ## Configuration
 
@@ -113,6 +113,7 @@ The worker is multi-tenant — each user passes their own Plausible API key via 
 | `PLAUSIBLE_BASE_URL` | No | `https://plausible.io` | URL of your Plausible instance (for self-hosted) |
 | `PLAUSIBLE_DEFAULT_SITE_ID` | No | — | Default site domain so you don't have to pass `site_id` every call |
 | `PLAUSIBLE_SITE_IDS` | No | — | Comma-separated site domains used as a `list_sites` fallback when the Sites API is unavailable |
+| `MCP_RATE_LIMIT_PER_MINUTE` | No | `60` | Per-IP Worker request limit used when no Cloudflare `RATE_LIMITER` binding is present |
 
 For the Cloudflare Worker, `PLAUSIBLE_API_KEY` is not needed as an env var — each user passes their own key via the `Authorization: Bearer` header.
 

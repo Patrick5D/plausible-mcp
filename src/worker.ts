@@ -1,18 +1,33 @@
 /**
- * [INPUT]: 依赖 @modelcontextprotocol/sdk 的 WebStandardStreamableHTTPServerTransport，依赖 server.js 创建 Plausible MCP server
+ * [INPUT]: 依赖 WebStandardStreamableHTTPServerTransport、server.js 和 IP 限流状态
  * [OUTPUT]: 对外提供 Cloudflare Worker fetch handler，通过 Authorization Bearer 接收 Plausible API key
- * [POS]: src 的远程入口，和 index.ts 的 stdio 入口并列，负责 HTTP/CORS 与每请求 server 初始化
+ * [POS]: src 的远程入口，和 index.ts 的 stdio 入口并列，负责 HTTP/CORS、限流与每请求 server 初始化
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { createServer } from "./server.js";
 
+interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 interface Env {
   PLAUSIBLE_BASE_URL?: string;
   PLAUSIBLE_DEFAULT_SITE_ID?: string;
   PLAUSIBLE_SITE_IDS?: string;
+  MCP_RATE_LIMIT_PER_MINUTE?: string;
+  RATE_LIMITER?: RateLimiter;
 }
+
+interface LocalBucket {
+  count: number;
+  resetAt: number;
+}
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const DEFAULT_RATE_LIMIT = 60;
+const localBuckets = new Map<string, LocalBucket>();
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +47,42 @@ function corsResponse(response: Response): Response {
   return patched;
 }
 
+function rateLimitResponse(): Response {
+  return corsResponse(
+    new Response(JSON.stringify({ error: "Rate limit exceeded. Try again later." }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": "60" },
+    })
+  );
+}
+
+function configuredLimit(env: Env): number {
+  const parsed = Number(env.MCP_RATE_LIMIT_PER_MINUTE);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_RATE_LIMIT;
+}
+
+function allowLocalRequest(key: string, limit: number, now: number): boolean {
+  const current = localBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    localBuckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (current.count >= limit) return false;
+  current.count += 1;
+  return true;
+}
+
+async function isRateLimited(request: Request, env: Env): Promise<boolean> {
+  const key = request.headers.get("CF-Connecting-IP") ?? "unknown";
+  if (env.RATE_LIMITER) {
+    const result = await env.RATE_LIMITER.limit({ key });
+    return !result.success;
+  }
+
+  return !allowLocalRequest(key, configuredLimit(env), Date.now());
+}
+
 export default {
   async fetch(
     request: Request,
@@ -40,6 +91,10 @@ export default {
   ): Promise<Response> {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    if (await isRateLimited(request, env)) {
+      return rateLimitResponse();
     }
 
     const authHeader = request.headers.get("Authorization");
