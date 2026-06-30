@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import worker from "../src/worker.js";
 
 function request(headers?: Record<string, string>) {
@@ -9,6 +9,10 @@ function request(headers?: Record<string, string>) {
 }
 
 describe("Cloudflare Worker entrypoint", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("handles CORS preflight", async () => {
     const response = await worker.fetch(
       new Request("https://worker.example.com/mcp", { method: "OPTIONS" }),
@@ -57,5 +61,21 @@ describe("Cloudflare Worker entrypoint", () => {
     );
 
     expect(response.status).toBe(429);
+  });
+
+  it("releases local rate limit buckets after the window expires", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    const env = { MCP_RATE_LIMIT_PER_MINUTE: "1" };
+    const headers = { "CF-Connecting-IP": "203.0.113.13" };
+
+    const first = await worker.fetch(request(headers), env, {} as ExecutionContext);
+    const second = await worker.fetch(request(headers), env, {} as ExecutionContext);
+    vi.setSystemTime(new Date("2026-01-01T00:01:01.000Z"));
+    const third = await worker.fetch(request(headers), env, {} as ExecutionContext);
+
+    expect(first.status).toBe(401);
+    expect(second.status).toBe(429);
+    expect(third.status).toBe(401);
   });
 });

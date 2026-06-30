@@ -39,16 +39,20 @@ function metricRows(response: PlausibleResponse): MetricRow[] {
 }
 
 function compareRows(current: MetricRow[], previous: MetricRow[]) {
+  const currentByKey = new Map(current.map((row) => [row.key, row.value]));
   const previousByKey = new Map(previous.map((row) => [row.key, row.value]));
-  return current
-    .map((row) => {
-      const previousValue = previousByKey.get(row.key) ?? 0;
-      const absolute_change = row.value - previousValue;
+  const keys = new Set([...currentByKey.keys(), ...previousByKey.keys()]);
+
+  return [...keys]
+    .map((key) => {
+      const currentValue = currentByKey.get(key) ?? 0;
+      const previousValue = previousByKey.get(key) ?? 0;
+      const absolute_change = currentValue - previousValue;
       const percent_change =
         previousValue === 0 ? null : (absolute_change / previousValue) * 100;
       return {
-        dimension: row.key,
-        current: row.value,
+        dimension: key,
+        current: currentValue,
         previous: previousValue,
         absolute_change,
         percent_change,

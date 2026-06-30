@@ -27,6 +27,7 @@ interface LocalBucket {
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_RATE_LIMIT = 60;
+const MAX_LOCAL_BUCKETS = 1_000;
 const localBuckets = new Map<string, LocalBucket>();
 
 const CORS_HEADERS: Record<string, string> = {
@@ -62,6 +63,8 @@ function configuredLimit(env: Env): number {
 }
 
 function allowLocalRequest(key: string, limit: number, now: number): boolean {
+  pruneLocalBuckets(now);
+
   const current = localBuckets.get(key);
   if (!current || current.resetAt <= now) {
     localBuckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
@@ -71,6 +74,20 @@ function allowLocalRequest(key: string, limit: number, now: number): boolean {
   if (current.count >= limit) return false;
   current.count += 1;
   return true;
+}
+
+function pruneLocalBuckets(now: number): void {
+  if (localBuckets.size === 0) return;
+
+  for (const [key, bucket] of localBuckets) {
+    if (bucket.resetAt <= now) localBuckets.delete(key);
+  }
+
+  while (localBuckets.size > MAX_LOCAL_BUCKETS) {
+    const oldestKey = localBuckets.keys().next().value;
+    if (!oldestKey) return;
+    localBuckets.delete(oldestKey);
+  }
 }
 
 async function isRateLimited(request: Request, env: Env): Promise<boolean> {

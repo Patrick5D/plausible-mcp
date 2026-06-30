@@ -23,6 +23,7 @@ describe("find_traffic_anomalies tool", () => {
         results: [
           { dimensions: ["/pricing"], metrics: [100] },
           { dimensions: ["/blog"], metrics: [100] },
+          { dimensions: ["/dead"], metrics: [200] },
         ],
         meta: {},
         query: {},
@@ -42,6 +43,13 @@ describe("find_traffic_anomalies tool", () => {
     expect(client.query).toHaveBeenCalledTimes(2);
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.anomalies).toEqual([
+      {
+        dimension: "/dead",
+        current: 0,
+        previous: 200,
+        absolute_change: -200,
+        percent_change: -100,
+      },
       {
         dimension: "/pricing",
         current: 150,
